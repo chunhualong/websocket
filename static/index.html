@@ -1,0 +1,230 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body>
+		<div class="header"></div>
+		<div class="content">
+			<div class="content_body">
+				<div>
+					<label for="1">选我</label>
+					<input onclick="selectInfo(1)" type="radio" name="select" id="1">
+					
+				</div>
+				<div>
+					<label  for="2">选我2</label>
+					<input onclick="selectInfo(2)" type="radio" name="select" id="2">
+				</div>
+			</div>
+		</div>
+		<!-- tips -->
+		<div id="tips">
+			<div class="tips-block"></div>
+			<div class="tips">
+				<div>
+					<input type="text" placeholder="输入当前房间用户名">
+					<div onclick="subOk()">确定</div>
+				</div>
+			</div>
+		</div>
+		<!-- loding -->
+		<div class="loading" style="display: none;">
+			<div>
+				正在寻找用户....
+			</div>
+		</div>
+	</body>
+</div>
+</html>
+<style>
+	*{
+		padding: 0;
+		margin: 0;
+		font-size: 16px;
+		font-family: Droidsansfallback,"Heiti SC",Dengxian,Arial;
+	}
+	body{
+		background-color: #f5f6f7;
+	}
+	input,select{
+		list-style-type:none;
+		text-decoration:none;
+		outline:none;
+	}
+	input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0px 1000px #262333 inset !important;
+        -webkit-text-fill-color: rgba(255,255,255,1)!important;
+    }
+	.content{
+		box-sizing: border-box;
+		padding-top: 50px;
+		height: 100%;
+		width: 100%;
+		overflow: auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.header{
+		background: #fff;
+		height: 50px;
+		position: fixed;
+		top:0;
+		width: 100%;
+	}
+	.tips{
+		width: 80%;
+		height: 80px;
+		position: fixed;
+		top:0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		margin: auto;
+		padding: 5px;
+		background: #fff;
+		border-radius: 5px;
+	}
+	.tips>div{
+		padding: 15px;
+	}
+	.tips>div input{
+		width: 100%;
+		border: none;
+		border-bottom: 1px solid #333;
+		margin-bottom: 10px;
+		padding: 5px;
+	}
+	.tips>div div{
+		text-align: right;
+		color: red;
+	}
+	.tips-block{
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		top: 0;
+		background: rgba(0,0,0,.5);
+	}
+	.loading{
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,.5);
+		top:0;
+		position: fixed;
+		display: flex;
+    	align-items: center;
+    	justify-content: center;
+	}
+	.loading div{
+		color: #fff;
+	}
+	.content_body{
+		width:80%;
+		border: 1px solid #333;
+		background-color: #fff;
+		padding: 10px;
+		border-radius: 5px;
+	}
+	.content_body>div{
+		padding: 10px;
+		text-align: center;
+		margin-top: 10px;
+	}
+</style>
+<script>
+
+	const socket = new WebSocket('ws://192.168.3.68:8082');
+	let loding =  document.querySelector('.loading');
+	let input  = document.querySelector('#tips input')
+	let tips = document.querySelector('#tips')
+
+	let name = input.value;
+	
+	function subOk() {
+		socket.send(JSON.stringify({
+			'name': input.value,
+			'login': true
+		}))
+		tips.style.display = 'none'
+	}
+
+
+	function selectInfo(index){
+		socket.send(JSON.stringify({
+			'name': input.value,
+			'login': false,
+			'select': index
+		}))
+	}
+
+	// Listen for messages
+	socket.addEventListener('message', function (event) {
+	    let data = JSON.parse(event.data)
+	    console.log(data)
+	    if (data.length <= 1) {
+	    	loding.style.display = 'flex';
+	    } else {
+	    	loding.style.display = 'none';
+	    }
+	});
+
+
+
+
+	/*const socket = new WebSocket('ws://192.168.3.68:8082');
+	let loding =  document.querySelector('.loading')
+	// Connection opened
+	let input = document.querySelector('#getSub')
+	let sub = document.querySelector('#sub')
+	let list = document.querySelector('#list')
+	let subName = document.querySelector('#subName')
+	let inputName = document.querySelector('.tip input')
+	let tip = document.querySelector('.tip')
+	let subTip = document.querySelector('#sub-tip')
+	let close = document.querySelector('#close')
+	let name;
+	close.onclick = function() {
+		console.log('2222')
+		socket.close(3000, 'qqqqqq');
+		socket.onclose  = function(e) {
+			console.log(e)
+		}
+	}
+	sub.onclick = function() {
+		socket.send(JSON.stringify({
+			'name': name,
+			'message': input.value
+		}))
+		input.value = '';
+	}
+	subName.onclick = function() {
+		name = inputName.value;
+		socket.send(JSON.stringify({
+			'name': name,
+			'message': input.value,
+			is: true
+		}))
+		subTip.style.display = 'none';
+	}
+
+
+
+
+
+	function selectInfo(){
+		socket.send(JSON.stringify({
+			'name': name,
+			'message': input.value,
+			'login': true
+		}))
+	}
+	socket.addEventListener('opened', function (event) {
+	    console.log(event.data)
+	});
+
+	// Listen for messages
+	socket.addEventListener('message', function (event) {
+	    console.log(event.data)
+	});*/
+</script>
