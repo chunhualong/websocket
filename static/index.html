@@ -8,6 +8,10 @@
 			好友对战
 		</div>
 		<div class="content">
+			<div class="content_name">
+				<div class="my-name" style="float:left;"></div>
+				<div class="user-name" style=float:right;></div>
+			</div>
 			<div class="topicName">qqq</div>
 			<div class="content_body"></div>
 		</div>
@@ -167,7 +171,7 @@
 	}
 </style>
 <script>
-	const socket = new WebSocket('ws://192.168.3.68:8082');
+	const socket = new WebSocket('ws://192.168.0.104:8082');
 	let loding =  document.querySelector('.loading');
 	let input  = document.querySelector('#tips input')
 	let tips = document.querySelector('#tips')
@@ -225,18 +229,20 @@
 	}
 
 	// Listen for messages
+	let honeName;
 	socket.addEventListener('message', function (event) {
 		let dom = document.querySelectorAll('.content_body .answer-list');
 	    let data = JSON.parse(event.data)
-		console.log(data)
-		// 判断当前用户登入
-	    // if (data.length <= 1) {
-	    // 	loding.style.display = 'flex';
-	    // } else {
-	    // 	loding.style.display = 'none';
-		// }
+		honeName = data['home_name'];
+		if (data['home_list'] && data['home_list'].length > 1) {
+			let index = data['home_list'].indexOf(input.value);
+			console.log(index)
+			$('.content_name .my-name').html(data['home_list'][index])
+			$('.content_name .user-name').html(data['home_list'][index + 1] ? data['home_list'][index + 1] : data['home_list'][index - 1])
+			loding.style.display = 'none';
+		}
 
-		
+		// 题目选择
 	    if (data.name != input.value && (data.select|| data.select == 0)) { //当前用户做出选择
 			if (data.select == answer) {
 				dom[data.select - 1].className = dom[data.select - 1].className + ' user-selected-yes'
@@ -256,6 +262,6 @@
 	});
 	// 当页面刷新的时候断开连接
 	window.onbeforeunload = function(){
-		socket.close(3000, input.value);
+		socket.close(3000, honeName);
 	}
 </script>

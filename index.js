@@ -68,13 +68,26 @@ function  isIn(index, data) {
 
 // 查找在线的房间
 function findHome(obj) {
-	if (JSON.stringify(obj) == '{}') {
-		return true;
-	}
 	for (let i in obj) {
-		if (i.home_numer == 1) {
-			return i.name;
+		if (obj[i].home_numer == 1) {
+			return i;
 		}
+	}
+}
+
+
+// 检查时候有空房间
+function checkingAirHome(obj, name) {
+	let arr = [];
+	for (let i in obj) {
+		if (i == name || obj[i].home_numer == 1) {
+			arr.push(name)
+		}
+	}
+	if (arr.includes(name)) {
+		return false;
+	} else {
+		return true;
 	}
 }
 
@@ -83,42 +96,39 @@ function findHome(obj) {
 wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
   		let data = JSON.parse(message);
-  		if (data.login) {
+  		if (data.login) {  // 用户登录时随机匹配房间和人
   			if(isIn(data.name, users)) {
   				users.push(data)
-				}
-
+			}
 			// 如果当前没有房间就添加房间
-			if (findHome(Home)) {
+			let backName; // 直返当前房间的值
+			console.log(checkingAirHome(Home, data.name));
+			if (JSON.stringify(Home) == '{}' || checkingAirHome(Home, data.name)) {
+				backName = data.name;
 				Home[data.name] = {
+					'home_name': data.name,
 					'home_numer': 1,
 					'home_list': [...[data.name]]
 				}
 			} else {
-				console.log(findHome(Home))
-				// Home[findHome(Home)] = {
-				// 	'home_numer': 2,
-				// 	'home_list': [...Home[findHome(Home)].list, ...[data.name]]
-				// }
+				let name = backName = findHome(Home);
+				Home[name] = {
+					'home_name': name,
+					'home_numer': 2,
+					'home_list': [...Home[name]['home_list'], ...[data.name]]
+				}
 			}
-
-
-
-				// 返回房间号以及房间人数
-				wss.broadcast(JSON.stringify(Home));
+			// 返回房间号以及房间人数
+			wss.broadcast(JSON.stringify(Home[backName]));
 
   		} else {
   			wss.broadcast(JSON.stringify(data));
   		}
 		});
 		ws.on('close', function close(code, message) {
-
-			//用户关闭时需重新进入
-			for (let i = 0; i < users.length; i++) {
-				if (users[i].name == message) {
-					users.splice(0,i + 1);
-				}
-			}
+			delete Home[message]; // 当一个用户离开时解散房间
+			console.log(Home);
+			wss.broadcast(JSON.stringify({loginOut: true}));
 		});
 })
 server.listen(8082);
