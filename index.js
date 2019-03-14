@@ -11,13 +11,8 @@ const wss = new WebSocket.Server({ server });
 
 app.get('/')
 
-wss.broadcast = function broadcast(data) { // 广播
-  wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data);
-    }
-  });
-};
+
+
 
 // 简单题目json
 
@@ -92,17 +87,17 @@ function checkingAirHome(obj, name) {
 }
 
 
-
+let clistList = {} // 声明所哟用户的cliten(但广播)
 wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
-  		let data = JSON.parse(message);
-  		if (data.login) {  // 用户登录时随机匹配房间和人
+		let data = JSON.parse(message);
+		  if (data.login) {  // 用户登录时随机匹配房间和人
+			clistList[data.name] = Array.from(wss.clients)[Array.from(wss.clients).length - 1];
   			if(isIn(data.name, users)) {
   				users.push(data)
 			}
 			// 如果当前没有房间就添加房间
 			let backName; // 直返当前房间的值
-			console.log(checkingAirHome(Home, data.name));
 			if (JSON.stringify(Home) == '{}' || checkingAirHome(Home, data.name)) {
 				backName = data.name;
 				Home[data.name] = {
@@ -119,16 +114,39 @@ wss.on('connection', function connection(ws) {
 				}
 			}
 			// 返回房间号以及房间人数
-			wss.broadcast(JSON.stringify(Home[backName]));
+			wss.broadcast(JSON.stringify(Home[backName]), clistList);
 
   		} else {
-  			wss.broadcast(JSON.stringify(data));
+			console.log(data.name)
+			let arr;
+			for (let i in Home) {
+				if (Home[i].home_list.includes(data.name)) {
+					arr = Home[i].home_list
+				}
+			}
+			console.log(arr)
+				//console.log(c)
+				clistList[arr[0]].send(JSON.stringify(data));
+				clistList[arr[1]].send(JSON.stringify(data));
+			
+  			//wss.broadcast(JSON.stringify(data));
   		}
 		});
 		ws.on('close', function close(code, message) {
-			delete Home[message]; // 当一个用户离开时解散房间
-			console.log(Home);
-			wss.broadcast(JSON.stringify({loginOut: true}));
+			let data = JSON.parse(message)
+			delete clistList[data.name]
+			delete Home[data.hoemeName]; // 当一个用户离开时解散房间
+			// wss.clients.forEach((cliten) => {
+			// 	cliten.send(JSON.stringify({loginOut: true}))
+			// })
 		});
 })
+
+wss.broadcast = function broadcast(data, list, name) { // 广播
+	let newData = JSON.parse(data);
+	for (let i of newData.home_list) {
+		list[i].send(data);
+	}
+};
+
 server.listen(8082);

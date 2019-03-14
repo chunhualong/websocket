@@ -171,7 +171,8 @@
 	}
 </style>
 <script>
-	const socket = new WebSocket('ws://192.168.0.104:8082');
+		alert('1')
+		const socket = new WebSocket('ws://127.0.0.1:8082');
 	let loding =  document.querySelector('.loading');
 	let input  = document.querySelector('#tips input')
 	let tips = document.querySelector('#tips')
@@ -202,7 +203,8 @@
 		socket.send(JSON.stringify({
 			'name': input.value,
 			'login': false,
-			'select': index
+			'select': index,
+			'home_name': honeName
 		}))
 	}
 
@@ -227,12 +229,11 @@
 					</div></div>`)
 		}
 	}
-
-	// Listen for messages
 	let honeName;
 	socket.addEventListener('message', function (event) {
 		let dom = document.querySelectorAll('.content_body .answer-list');
-	    let data = JSON.parse(event.data)
+		let data = JSON.parse(event.data)
+		console.log(data)
 		honeName = data['home_name'];
 		if (data['home_list'] && data['home_list'].length > 1) {
 			let index = data['home_list'].indexOf(input.value);
@@ -260,8 +261,10 @@
 			}
 		}
 	});
+	// Listen for messages
+	
 	// 当页面刷新的时候断开连接
 	window.onbeforeunload = function(){
-		socket.close(3000, honeName);
+		socket.close(3000, JSON.stringify({honeName: honeName, name: input.name}));
 	}
 </script>

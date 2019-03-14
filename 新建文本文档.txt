@@ -1,0 +1,12 @@
+server
+
+  有一间房间
+	当前的在线人数 peopNum: number
+	当前的在线人数名字 peopList: []
+	当前在线人数的cliten peopClits: { name: cliten }
+	在线人数选择的答案 people_answer: {name: number}
+
+
+第一次等日发送消息
+	当前登录的状态
+	当前用户的名字
