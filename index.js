@@ -105,59 +105,30 @@ wss.on('connection', function connection(ws, s, c , d) {
 	} else {
 		let Hname = backName = findHome(Home);
 		console.log('backName ', Hname)
-		Home[name] = {
-			'home_name': name,
+		Home[Hname] = {
+			'home_name': Hname,
 			'home_numer': 2,
 			'home_list': [...Home[Hname]['home_list'], ...[name]]
 		}
 	}
 	wss.broadcast(JSON.stringify(Home[backName]), clistList);
   ws.on('message', function incoming(message) {
-		let data = JSON.parse(message);
-		//   if (data.login) {  // 用户登录时随机匹配房间和人
-		// 	console.log('999999999999  b    ' + Array.from(wss.clients).length);
-  		// 	if(isIn(data.name, users)) {
-  		// 		users.push(data)
-		// 	}
-		// 	// 如果当前没有房间就添加房间
-		// 	let backName; // 直返当前房间的值
-		// 	if (JSON.stringify(Home) == '{}' || checkingAirHome(Home, data.name)) {
-		// 		backName = data.name;
-		// 		Home[data.name] = {
-		// 			'home_name': data.name,
-		// 			'home_numer': 1,
-		// 			'home_list': [...[data.name]]
-		// 		}
-		// 	} else {
-		// 		let name = backName = findHome(Home);
-		// 		Home[name] = {
-		// 			'home_name': name,
-		// 			'home_numer': 2,
-		// 			'home_list': [...Home[name]['home_list'], ...[data.name]]
-		// 		}
-		// 	}
-		// 	// 返回房间号以及房间人数
-		// 	wss.broadcast(JSON.stringify(Home[backName]), clistList);
-
-  		// } else {
+			let data = JSON.parse(message);
 			let arr;
 			for (let i in Home) {
 				if (Home[i].home_list.includes(data.name)) {
 					arr = Home[i].home_list
 				}
 			}
-				//console.log(c)
-				clistList[arr[0]].send(JSON.stringify(data));
-				clistList[arr[1]].send(JSON.stringify(data));
-			
-  			//wss.broadcast(JSON.stringify(data));
-  		//}
+			for (let f of arr) {4
+				clistList[f].send(JSON.stringify(data));
+			}
 		});
 		ws.on('close', function close(code, message) {
 			let data = JSON.parse(message)
 			delete clistList[data.name]
 			delete Home[data['home_Name']];
-			console.log(data['home_Name'], Home);
+			console.log(clistList, Home);
 			 // 当一个用户离开时解散房间
 			// wss.clients.forEach((cliten) => {
 			// 	cliten.send(JSON.stringify({loginOut: true}))
@@ -167,10 +138,8 @@ wss.on('connection', function connection(ws, s, c , d) {
 
 wss.broadcast = function (data, list, name) { // 广播
 	let newData = JSON.parse(data);
-	console.log(list)
 	for (let i of newData.home_list) {
 		if (list[i].readyState === WebSocket.OPEN) {
-			console.log(11111111111111111111111111111111111111)
 			list[i].send(data);
 		  }
 	}

@@ -196,7 +196,7 @@
 	// 输入名字确定
 	function subOk() {
 		let name = input.value;
-		socket = new WebSocket(`ws://192.168.11.202:8082/${name}`);
+		socket = new WebSocket(`ws://127.0.0.1:8082/${name}`);
 		wssLine();
 		// socket.send(JSON.stringify({
 		// 	'name': input.value,
