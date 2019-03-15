@@ -8,12 +8,19 @@
 			好友对战
 		</div>
 		<div class="content">
+			<div class="content_time" style="text-align:center">
+
+			</div>
 			<div class="content_name">
 				<div class="my-name" style="float:left;"></div>
 				<div class="user-name" style=float:right;></div>
 			</div>
 			<div class="topicName">qqq</div>
 			<div class="content_body"></div>
+
+			<div class="content_btn" onclick="closeWss()">
+				退出
+			</div>
 		</div>
 		<!-- tips -->
 		<div id="tips">
@@ -169,33 +176,39 @@
 	.my-selected-eroor .my-select div:last-child {
 		display: block;
 	}
+	.content_btn{
+		text-align: center;
+		width: 80%;
+		margin: 10px auto;
+		height: 50px;
+		line-height: 50px;
+		background: #7979e4;
+		color: #fff;
+	}
 </style>
 <script>
-		alert('1')
-		const socket = new WebSocket('ws://127.0.0.1:8082');
+	let socket; 
 	let loding =  document.querySelector('.loading');
 	let input  = document.querySelector('#tips input')
-	let tips = document.querySelector('#tips')
-	let name = input.value;
+	let tips = document.querySelector('#tips');
 	let isClick = false; //是否可再次选择
 
 	// 输入名字确定
 	function subOk() {
-		socket.send(JSON.stringify({
-			'name': input.value,
-			'login': true
-		}))
+		let name = input.value;
+		socket = new WebSocket(`ws://192.168.11.202:8082/${name}`);
+		wssLine();
+		// socket.send(JSON.stringify({
+		// 	'name': input.value,
+		// 	'login': true
+		// }))
 		tips.style.display = 'none';
-
 		//显示loading
 		loding.style.display = 'flex';
-		//输入名字后显示题目第一条
-		$.get('/api/tipc', {index: 0}).then(function(res) {
-			showTopic(res.list);
-		})
 	}
 
 	// 发送用户选择的答案
+	let selected = [];
 	function selectInfo(index){
 		if (isClick) {
 			return false;
@@ -208,6 +221,37 @@
 		}))
 	}
 
+
+	let topicIndex = 0;
+	function timeFn(time){
+		if (selected.length == 2 && topicIndex < 2) {
+			topicIndex += 1
+			$.get('/api/tipc', {index: topicIndex}).then(function(res) {
+				selected = [];
+				showTopic(res.list);
+				timeFn(30);
+			})
+		}
+		setTimeout(() => {
+			if (time == 0) {
+				topicIndex += 1;
+				if (topicIndex >= 2) {
+					return false;
+				} 
+				$.get('/api/tipc', {index: topicIndex}).then(function(res) {
+					showTopic(res.list);
+					timeFn(30);
+				})
+				return false;
+			}
+			time--;
+			$('.content_time').html(time);
+			timeFn(time)
+		}, 1000)
+	}
+
+
+
 	//  展示题目
 	let content = $('.content_body');
 	let answer; //正确答案
@@ -216,6 +260,8 @@
 		let topic = arr.topic;
 		answer = arr.answer;
 		$('.topicName').html(topic);
+		content.html('');
+		isClick = false;
 		for (let i = 0; i < list.length; i++) {
 			content.append(`<div class="answer-list" onclick='selectInfo(${i+1})'>
 				<div class="my-select">
@@ -230,21 +276,26 @@
 		}
 	}
 	let honeName;
-	socket.addEventListener('message', function (event) {
+	function wssLine() {
+		socket.addEventListener('message', function (event) {
 		let dom = document.querySelectorAll('.content_body .answer-list');
 		let data = JSON.parse(event.data)
 		console.log(data)
 		honeName = data['home_name'];
 		if (data['home_list'] && data['home_list'].length > 1) {
 			let index = data['home_list'].indexOf(input.value);
-			console.log(index)
 			$('.content_name .my-name').html(data['home_list'][index])
 			$('.content_name .user-name').html(data['home_list'][index + 1] ? data['home_list'][index + 1] : data['home_list'][index - 1])
 			loding.style.display = 'none';
+			//匹配到房间时刷题
+			$.get('/api/tipc', {index: 0}).then(function(res) {
+				showTopic(res.list);
+			})
+			timeFn(30);
 		}
-
 		// 题目选择
-	    if (data.name != input.value && (data.select|| data.select == 0)) { //当前用户做出选择
+		if (data.name != input.value && (data.select|| data.select == 0)) { //当前用户做出选择
+			selected.push(1)
 			if (data.select == answer) {
 				dom[data.select - 1].className = dom[data.select - 1].className + ' user-selected-yes'
 			} else {
@@ -252,6 +303,7 @@
 			}
 		} else { //
 			if ((data.select|| data.select == 0)) {
+				selected.push(1)
 				if (data.select == answer) {
 				dom[data.select - 1].className = dom[data.select - 1].className + ' my-selected-yes'
 				} else {
@@ -261,10 +313,18 @@
 			}
 		}
 	});
-	// Listen for messages
+	}
 	
+	
+	function closeWss() {
+		alert(honeName);
+		socket.close(3000, JSON.stringify({'home_Name': honeName, name: input.value}));
+		honeName = '';
+	}
+
 	// 当页面刷新的时候断开连接
 	window.onbeforeunload = function(){
-		socket.close(3000, JSON.stringify({honeName: honeName, name: input.name}));
+		socket.close(3000, JSON.stringify({'home_Name': honeName, name: input.value}));
+		honeName = '';
 	}
 </script>
