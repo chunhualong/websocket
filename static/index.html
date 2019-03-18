@@ -280,8 +280,10 @@
 		socket.addEventListener('message', function (event) {
 		let dom = document.querySelectorAll('.content_body .answer-list');
 		let data = JSON.parse(event.data)
-		console.log(data)
-		honeName = data['home_name'];
+		console.log(data);
+		if (data['home_name']) {
+			honeName = data['home_name'];
+		}
 		if (data['home_list'] && data['home_list'].length > 1) {
 			let index = data['home_list'].indexOf(input.value);
 			$('.content_name .my-name').html(data['home_list'][index])

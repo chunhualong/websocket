@@ -92,7 +92,6 @@ function checkingAirHome(obj, name) {
 let clistList = {} // 声明所哟用户的cliten(但广播)
 wss.on('connection', function connection(ws, s, c , d) {
 	let name = s.url.replace('/', '');
-	console.log(name, Array.from(wss.clients).length)
 	clistList[name] = Array.from(wss.clients)[Array.from(wss.clients).length - 1];
 	let backName;
 	if (JSON.stringify(Home) == '{}' || checkingAirHome(Home, name)) {
@@ -104,7 +103,6 @@ wss.on('connection', function connection(ws, s, c , d) {
 		}
 	} else {
 		let Hname = backName = findHome(Home);
-		console.log('backName ', Hname)
 		Home[Hname] = {
 			'home_name': Hname,
 			'home_numer': 2,
@@ -126,13 +124,15 @@ wss.on('connection', function connection(ws, s, c , d) {
 		});
 		ws.on('close', function close(code, message) {
 			let data = JSON.parse(message)
+			let arr = Home[data['home_Name']]['home_list'];
+			arr.splice(Home[data['home_Name']]['home_list'].indexOf(data.name), 1);
+			console.log(arr)
+			if (arr.length != 0) {
+				clistList[arr[0]].send(JSON.stringify({loginOut: true}))
+			}
 			delete clistList[data.name]
 			delete Home[data['home_Name']];
 			console.log(clistList, Home);
-			 // 当一个用户离开时解散房间
-			// wss.clients.forEach((cliten) => {
-			// 	cliten.send(JSON.stringify({loginOut: true}))
-			// })
 		});
 })
 
