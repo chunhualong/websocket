@@ -281,6 +281,10 @@
 		let dom = document.querySelectorAll('.content_body .answer-list');
 		let data = JSON.parse(event.data)
 		console.log(data);
+		if (data.loginOut) {
+			location.reload();
+			return false;
+		}
 		if (data['home_name']) {
 			honeName = data['home_name'];
 		}
@@ -319,9 +323,9 @@
 	
 	
 	function closeWss() {
-		alert(honeName);
 		socket.close(3000, JSON.stringify({'home_Name': honeName, name: input.value}));
 		honeName = '';
+		location.reload();
 	}
 
 	// 当页面刷新的时候断开连接
